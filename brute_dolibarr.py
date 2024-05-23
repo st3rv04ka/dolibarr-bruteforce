@@ -32,7 +32,9 @@ def attempt_login(username, password):
     token = re.search("\"anti-csrf-newtoken\" content=\"(.+)\"", r.text).group(1).strip()
     print(f"Request token: {token}")
     if login(session, URL, token, username, password):
+        session.Close()
         return True
+    session.Close()
     return False
 
 def main():
